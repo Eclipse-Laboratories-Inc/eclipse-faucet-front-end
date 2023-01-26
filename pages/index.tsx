@@ -1,7 +1,7 @@
 import { NextPage } from 'next'
 import Head from 'next/head'
 import Image from 'next/image'
-import { useState, useCallback, useMemo, JSXElementConstructor, ReactElement, ReactFragment, ReactPortal } from 'react'
+import { useState, useCallback, useMemo, useEffect, JSXElementConstructor, ReactElement, ReactFragment, ReactPortal } from 'react'
 import { ConnectionProvider, WalletProvider, useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { SolflareWalletAdapter, PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
@@ -54,9 +54,7 @@ export const Wallet = (props: WalletProps) => {
   );
 };
 
-type FaucetFormProps = {
-}
-export const FaucetForm = (props: FaucetFormProps) => {
+export const FaucetForm = () => {
 
   const [address, setAddress] = useState<string>("")
   const [amount, setAmount] = useState<string | null>(null)
@@ -67,6 +65,12 @@ export const FaucetForm = (props: FaucetFormProps) => {
 
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = useWallet();
+  
+  useEffect(() => {
+    if (publicKey !== null) {
+      setAddress(publicKey.toString());
+    }
+  }, [publicKey]);
 
   const onSend = useCallback(async () => {
     const faucet = `${eclipseRpcEndpoint}`
@@ -82,7 +86,7 @@ export const FaucetForm = (props: FaucetFormProps) => {
         jsonrpc: '2.0',
         id: '2',
         method: 'requestAirdrop',
-        params: [(address || publicKey), Math.round(Number(amount) * 1000000000)],
+        params: [(address), Math.round(Number(amount) * 1000000000)],
       }),
     })
     const response = await res.json()
@@ -92,7 +96,7 @@ export const FaucetForm = (props: FaucetFormProps) => {
     } else {
       setSignature(response.result)
     }
-  }, [publicKey, sendTransaction, connection, address, amount])
+  }, [sendTransaction, connection, address, amount])
 
   return (
     <div className="form" >
@@ -105,7 +109,7 @@ export const FaucetForm = (props: FaucetFormProps) => {
       />
       <div className="form-label">Wallet Address</div>
       <input
-        value={address || publicKey as unknown as string}
+        value={address}
         onChange={(e) => setAddress(e.target.value)}
         placeholder="public key"
         type="text"
