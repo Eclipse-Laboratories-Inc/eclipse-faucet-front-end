@@ -155,7 +155,7 @@ const Home: NextPage = () => {
       </Head>
       <div className="container">
         <div className="icon">
-          <Image alt="Elipse logo" src="/icon.svg" height={90} width={90} />
+          <Image alt="Eclipse logo" src="/icon.svg" height={90} width={90} />
         </div>
 
         <div className="form-content">
