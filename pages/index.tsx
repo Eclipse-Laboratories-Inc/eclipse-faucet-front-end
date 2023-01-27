@@ -1,7 +1,7 @@
 import { NextPage } from 'next'
 import Head from 'next/head'
 import Image from 'next/image'
-import { useState, useCallback, useMemo, useEffect, JSXElementConstructor, ReactElement, ReactFragment, ReactPortal } from 'react'
+import { useState, useCallback, useMemo, useEffect, ReactNode } from 'react'
 import { ConnectionProvider, WalletProvider, useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { SolflareWalletAdapter, PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
@@ -20,7 +20,7 @@ const ReactUIWalletModalProviderDynamic = dynamic(
 // Default styles that can be overridden by your app
 require('@solana/wallet-adapter-react-ui/styles.css');
 
-type WalletProps = { children: string | number | boolean | ReactElement<any, string | JSXElementConstructor<any>> | ReactFragment | ReactPortal | null | undefined; }
+type WalletProps = { children: ReactNode }
 
 export const Wallet = (props: WalletProps) => {
   // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'.
@@ -44,7 +44,7 @@ export const Wallet = (props: WalletProps) => {
         <ReactUIWalletModalProviderDynamic>
           <div className="wallet-connect">
             <WalletMultiButton />
-            <span >Connect to fill-in your pubkey :-) </span>
+            <span >Connect to fill-in your Solana address :-) </span>
           </div>
 
           {props.children}
@@ -86,7 +86,7 @@ export const FaucetForm = () => {
         jsonrpc: '2.0',
         id: '2',
         method: 'requestAirdrop',
-        params: [(address), Math.round(Number(amount) * 1000000000)],
+        params: [address, Math.round(Number(amount) * 1000000000)],
       }),
     })
     const response = await res.json()
@@ -96,7 +96,7 @@ export const FaucetForm = () => {
     } else {
       setSignature(response.result)
     }
-  }, [sendTransaction, connection, address, amount])
+  }, [address, amount, eclipseRpcEndpoint])
 
   return (
     <div className="form" >
@@ -155,7 +155,7 @@ const Home: NextPage = () => {
       </Head>
       <div className="container">
         <div className="icon">
-          <Image src="/icon.svg" height={90} width={90} />
+          <Image alt="Elipse logo" src="/icon.svg" height={90} width={90} />
         </div>
 
         <div className="form-content">
