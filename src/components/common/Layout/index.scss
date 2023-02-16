@@ -1,0 +1,25 @@
+.layout {
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  @apply text-white;
+  &:before {
+    position: absolute;
+    content: '';
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    margin: auto;
+    @apply bg-black;
+  }
+  &__body {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    z-index: 2;
+  }
+}

@@ -1,0 +1,7 @@
+.circle-timer {
+  @apply relative flex justify-center items-center;
+  svg {
+    @apply absolute top-0 left-0 w-full h-full overflow-visible;
+    transform: rotateY(-180deg) rotateZ(-90deg);
+  }
+}

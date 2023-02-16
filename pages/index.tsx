@@ -1,4 +1,8 @@
 import { NextPage } from 'next'
+import { Web3ReactProvider } from '@web3-react/core'
+import Web3 from 'web3'
+import { TokensProvider } from '../src/contexts/tokens'
+
 import Head from 'next/head'
 import Image from 'next/image'
 import { useState, useCallback, useMemo, useEffect, ReactNode } from 'react'
@@ -10,19 +14,22 @@ import {
 } from '@solana/wallet-adapter-react-ui';
 import dynamic from "next/dynamic";
 import { clusterApiUrl } from '@solana/web3.js';
+import { provider } from 'web3-core'
+import TokenGetter from '../src/components/TokenGetter'
 const ReactUIWalletModalProviderDynamic = dynamic(
   async () =>
     (await import("@solana/wallet-adapter-react-ui")).WalletModalProvider,
   { ssr: false }
 );
-
+function getLibrary(provider: provider) {
+  return new Web3(provider)
+}
 
 // Default styles that can be overridden by your app
 require('@solana/wallet-adapter-react-ui/styles.css');
 
-type WalletProps = { children: ReactNode }
 
-export const Wallet = (props: WalletProps) => {
+export const Wallet = ({ children }: { children: ReactNode }) => {
   // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'.
   const network = WalletAdapterNetwork.Devnet;
 
@@ -47,7 +54,7 @@ export const Wallet = (props: WalletProps) => {
             <label>Connect to fill in your Solana address :-)</label>
           </div>
 
-          {props.children}
+          {children}
         </ReactUIWalletModalProviderDynamic>
       </WalletProvider>
     </ConnectionProvider>
@@ -65,7 +72,7 @@ export const FaucetForm = () => {
 
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = useWallet();
-  
+
   useEffect(() => {
     if (publicKey !== null) {
       setAddress(publicKey.toString());
@@ -160,19 +167,37 @@ const Home: NextPage = () => {
         />
         <meta property="og:image" content={`${SELF_URL}/eclipse_twitter_card.jpg`} />
       </Head>
-      <div className="container">
-        <div className="icon">
-          <Image alt="Eclipse logo" src="/icon.svg" height={90} width={90} />
-        </div>
+      <div className="icon">
+        <Image alt="Eclipse logo" src="/icon.svg" height={90} width={90} />
+      </div>
 
-        <div className="form-content">
-          <div className="title">
-            <div className="subhead">Eclipse</div>
-            <div className="header">Testnet Faucet</div>
+      <div className="title">
+        <div className="subhead">Eclipse</div>
+      </div>
+      <div className="grid grid-cols-2">
+        <div>
+          <div className="form-content">
+            <div className="title">
+              <div className="header">Solana Virtual Machine Testnet Faucet</div>
+            </div>
+            <Wallet>
+              <FaucetForm />
+            </Wallet>
           </div>
-          <Wallet>
-            <FaucetForm />
-          </Wallet>
+
+        </div>
+        <div>
+          <div className="title">
+            <div className="header">Ethereum Virtual Machine Testnet Faucet</div>
+          </div>
+          <Web3ReactProvider getLibrary={getLibrary}>
+            // @ts-ignore
+              <TokensProvider>
+                // @ts-ignore
+                <TokenGetter />
+              </TokensProvider>
+
+          </Web3ReactProvider>
         </div>
       </div>
     </div>

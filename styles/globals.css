@@ -1,4 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 body, html {
   margin: 0;
@@ -11,11 +14,6 @@ body {
   color: #fff;
 }
 
-.container {
-  display: flex;
-  flex-flow: column;
-  align-items: center;
-}
 
 .title {
   display: flex;
