@@ -20,6 +20,11 @@ const ReactUIWalletModalProviderDynamic = dynamic(
 // Default styles that can be overridden by your app
 require('@solana/wallet-adapter-react-ui/styles.css');
 
+enum ChainVm  {
+  ethereum = "Etheruem",
+  solana = "Solana",
+}
+
 type WalletProps = { children: ReactNode }
 
 export const Wallet = (props: WalletProps) => {
@@ -54,18 +59,46 @@ export const Wallet = (props: WalletProps) => {
   );
 };
 
-export const FaucetForm = () => {
+type FaucetFormProps = {
+  showChooseNetwork: Boolean,
+  vm: ChainVm,
+  defaultFaucetUrl: string,
+}
+
+export const FaucetForm = (props: FaucetFormProps) => {
+  const {
+    showChooseNetwork,
+    vm,
+    defaultFaucetUrl,
+  } = props
 
   const [address, setAddress] = useState<string>("")
   const [amount, setAmount] = useState<string | null>(null)
   const [sending, setSending] = useState(false)
-  const [eclipseRpcEndpoint, setEclipseRpcEndpoint] = useState("https://api.apricot.eclipsenetwork.xyz:8899")
+  const [faucetUrl, setFaucetUrl] = useState(defaultFaucetUrl)
   const [error, setError] = useState<string | null>(null)
   const [signature, setSignature] = useState<string | null>(null)
 
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = useWallet();
-  
+
+  const solanaRpcbody = (amount: number, address: string) => (
+    JSON.stringify({
+      jsonrpc: '2.0',
+      id: '2',
+      method: 'requestAirdrop',
+      params: [address, Math.round(amount * 1000000000)],
+    })
+  )
+
+  const neonEvmBody = (amount: number, address: string) => (
+    JSON.stringify({
+      amount,
+      address
+    })
+  )
+
+
   useEffect(() => {
     if (publicKey !== null) {
       setAddress(publicKey.toString());
@@ -73,22 +106,19 @@ export const FaucetForm = () => {
   }, [publicKey]);
 
   const onSend = useCallback(async () => {
-    const faucet = `${eclipseRpcEndpoint}`
+    const faucet = `${faucetUrl}`
 
     setSending(true)
     setError(null)
+    const body = vm === ChainVm.solana ? solanaRpcbody(Number(amount), address) : neonEvmBody(Number(amount), address)
     const res = await fetch(faucet, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: '2',
-        method: 'requestAirdrop',
-        params: [address, Math.round(Number(amount) * 1000000000)],
-      }),
+      body
     })
+    
     const response = await res.json()
     setSending(false)
     if (response.error) {
@@ -96,29 +126,27 @@ export const FaucetForm = () => {
     } else {
       setSignature(response.result)
     }
-  }, [address, amount, eclipseRpcEndpoint])
+  }, [address, amount, faucetUrl])
 
   return (
     <div className="form">
-      <label htmlFor="input-endpoint" className="form-label">Choose your Eclipse Network</label>
-      <input
+      { showChooseNetwork && <><label htmlFor="input-endpoint" className="form-label">Choose your Eclipse Network</label><input
         id="input-endpoint"
-        value={eclipseRpcEndpoint}
-        onChange={(e) => setEclipseRpcEndpoint(e.target.value)}
+        value={faucetUrl}
+        onChange={(e) => setFaucetUrl(e.target.value)}
         placeholder="Eclipse Solana RPC endpoint"
-        type="text"
-      />
+        type="text" /></> }
 
-      <label htmlFor="input-address" className="form-label">Wallet Address</label>
+      <label htmlFor="input-address" className="form-label">{vm} Wallet Address</label>
       <input
         id="input-address"
         value={address}
         onChange={(e) => setAddress(e.target.value)}
-        placeholder="public key"
+        placeholder="address"
         type="text"
       />
 
-      <label htmlFor="input-amount" className="form-label">Amount ($SOL)</label>
+      <label htmlFor="input-amount" className="form-label">Token Amount</label>
       <input
         id="input-amount"
         style={{ width: "--webkit-fill-available" }}
@@ -144,7 +172,7 @@ const Home: NextPage = () => {
   return (
     <div>
       <Head>
-        <title>Eclipse Testnet Faucet</title>
+        <title>Eclipse Testnet Faucets</title>
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:image" content={`${SELF_URL}/eclipse_twitter_card.jpg`} />
         <meta name="twitter:title" content="Eclipse Testnet Faucet" />
@@ -165,15 +193,32 @@ const Home: NextPage = () => {
           <Image alt="Eclipse logo" src="/icon.svg" height={90} width={90} />
         </div>
 
-        <div className="form-content">
-          <div className="title">
-            <div className="subhead">Eclipse</div>
-            <div className="header">Testnet Faucet</div>
+        <div className="subhead">Eclipse</div>
+        <div className="grid grid-cols-2 space-x-4">
+          <div className="form-content">
+            <div className="title">
+              <div className="header">Solana Testnet Faucet</div>
+            </div>
+            <Wallet>
+              <FaucetForm 
+                showChooseNetwork={true}
+                vm={ChainVm.solana}
+                defaultFaucetUrl={"https://api.apricot.eclipsenetwork.xyz:8899"}
+              />
+            </Wallet>
           </div>
-          <Wallet>
-            <FaucetForm />
-          </Wallet>
+          <div className="form-content">
+            <div className="title">
+              <div className="header">Ethereum Testnet Faucet</div>
+            </div>
+              <FaucetForm
+                showChooseNetwork={false}
+                vm={ChainVm.ethereum}
+                defaultFaucetUrl={"https://faucet.evm.apricot.eclipsenetwork.xyz/request_neon"}
+              />
+          </div>
         </div>
+
       </div>
     </div>
   )
