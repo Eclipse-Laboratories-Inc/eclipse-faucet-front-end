@@ -191,9 +191,7 @@ const Home: NextPage = () => {
             <div className="header">Ethereum Virtual Machine Testnet Faucet</div>
           </div>
           <Web3ReactProvider getLibrary={getLibrary}>
-            // @ts-ignore
               <TokensProvider>
-                // @ts-ignore
                 <TokenGetter />
               </TokensProvider>
 
