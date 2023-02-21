@@ -1,7 +1,7 @@
 import { NextPage } from 'next'
 import Head from 'next/head'
 import Image from 'next/image'
-import { useState, useCallback, useMemo, useEffect, ReactNode } from 'react'
+import { useState, useCallback, useMemo, useEffect, ReactNode, Children } from 'react'
 import { ConnectionProvider, WalletProvider, useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { SolflareWalletAdapter, PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
@@ -10,6 +10,40 @@ import {
 } from '@solana/wallet-adapter-react-ui';
 import dynamic from "next/dynamic";
 import { clusterApiUrl } from '@solana/web3.js';
+import { InjectedConnector } from "@web3-react/injected-connector";
+import { useWeb3React } from '@web3-react/core'
+// Default styles that can be overridden by your app
+require('@solana/wallet-adapter-react-ui/styles.css');
+
+export const toHex = (num: Number) => {
+  const val = Number(num);
+  return "0x" + val.toString(16);
+};
+
+
+const networkParams = {
+  '91001': {
+    chainId: toHex(91001),
+    rpcUrls: ["https://api.evm.apricot.eclipsenetwork.xyz/solana"],
+    chainName: "Apricot Testnet",
+    nativeCurrency: { name: "NEON", decimals: 18, symbol: "NEON" },
+    blockExplorerUrls: ["https://ethscan.io"],
+    iconUrls: ["https://bafkreihxfowv6rjil2bndjgxjhthhqf6ib6rfvunf27c4osi4xztporp6i.ipfs.cf-ipfs.com"]
+  },
+  '91002': {
+    chainId: toHex(91002),
+    rpcUrls: ["https://api.evm.zebec.eclipsenetwork.xyz/solana"],
+    chainName: "Zebec Testnet",
+    nativeCurrency: { name: "NEON", decimals: 18, symbol: "NEON" },
+    blockExplorerUrls: ["https://ethscan.io"],
+    iconUrls: [
+      "https://bafkreihxfowv6rjil2bndjgxjhthhqf6ib6rfvunf27c4osi4xztporp6i.ipfs.cf-ipfs.com"
+    ]
+  }
+};
+
+
+
 const ReactUIWalletModalProviderDynamic = dynamic(
   async () =>
     (await import("@solana/wallet-adapter-react-ui")).WalletModalProvider,
@@ -17,13 +51,14 @@ const ReactUIWalletModalProviderDynamic = dynamic(
 );
 
 
-// Default styles that can be overridden by your app
-require('@solana/wallet-adapter-react-ui/styles.css');
 
-enum ChainVm  {
+
+enum ChainVm {
   ethereum = "Etheruem",
   solana = "Solana",
 }
+
+
 
 type WalletProps = { children: ReactNode }
 
@@ -63,6 +98,7 @@ type FaucetFormProps = {
   showChooseNetwork: Boolean,
   vm: ChainVm,
   defaultFaucetUrl: string,
+  account?: string | null
 }
 
 export const FaucetForm = (props: FaucetFormProps) => {
@@ -70,6 +106,7 @@ export const FaucetForm = (props: FaucetFormProps) => {
     showChooseNetwork,
     vm,
     defaultFaucetUrl,
+    account,
   } = props
 
   const [address, setAddress] = useState<string>("")
@@ -78,7 +115,6 @@ export const FaucetForm = (props: FaucetFormProps) => {
   const [faucetUrl, setFaucetUrl] = useState(defaultFaucetUrl)
   const [error, setError] = useState<string | null>(null)
   const [signature, setSignature] = useState<string | null>(null)
-
   const { connection } = useConnection();
   const { publicKey, sendTransaction } = useWallet();
 
@@ -118,7 +154,7 @@ export const FaucetForm = (props: FaucetFormProps) => {
       },
       body
     })
-    
+
     const response = await res.json()
     setSending(false)
     if (response.error) {
@@ -128,19 +164,20 @@ export const FaucetForm = (props: FaucetFormProps) => {
     }
   }, [address, amount, faucetUrl])
 
+
   return (
     <div className="form">
-      { showChooseNetwork && <><label htmlFor="input-endpoint" className="form-label">Choose your Eclipse Network</label><input
+      {showChooseNetwork && <><label htmlFor="input-endpoint" className="form-label">Choose your {vm} Eclipse Network</label><input
         id="input-endpoint"
         value={faucetUrl}
         onChange={(e) => setFaucetUrl(e.target.value)}
         placeholder="Eclipse Solana RPC endpoint"
-        type="text" /></> }
+        type="text" /></>}
 
       <label htmlFor="input-address" className="form-label">{vm} Wallet Address</label>
       <input
         id="input-address"
-        value={address}
+        value={account}
         onChange={(e) => setAddress(e.target.value)}
         placeholder="address"
         type="text"
@@ -168,6 +205,67 @@ export const FaucetForm = (props: FaucetFormProps) => {
 
 const SELF_URL = process.env.NEXT_PUBLIC_SELF_URL
 const Home: NextPage = () => {
+
+  const { activate, deactivate, active, chainId, account, library } = useWeb3React();
+  const [error, setError] = useState<string | null>(null)
+
+  console.log({
+    account,
+    chainId,
+    active,
+    library
+  })
+
+
+  const EvmWallet = (props: WalletProps) => {
+
+
+    const switchNetwork = async (chainId: Number) => {
+      try {
+        await library.provider.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: toHex(chainId) }]
+        });
+      } catch (switchError) {
+        if (switchError.code === 4902) {
+          try {
+            await library.provider.request({
+              method: "wallet_addEthereumChain",
+              params: [networkParams[chainId.toString()]]
+            });
+          } catch (error) {
+            setError(error);
+          }
+        }
+      }
+    };
+
+
+    const Injected = new InjectedConnector({
+      supportedChainIds: [1, 91001, 91002]
+    });
+
+    const handleConnect = async () => {
+      activate(Injected)
+    }
+
+    return (
+      <div className="flex flex-col">
+        <button 
+          className={`my-1.5 ${account && 'bg-transparent'} bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded`}
+          onClick={handleConnect}>
+          { account ? account : "Connect Wallet"}
+
+          </button>
+        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={() => {
+          switchNetwork(91002)
+        }}>Connect <span style={{ color: 'yellow'}}>Zebec</span> EVM Test Network</button>
+        {props.children}
+      </div>
+
+    )
+
+  }
 
   return (
     <div>
@@ -200,7 +298,7 @@ const Home: NextPage = () => {
               <div className="header">Solana Testnet Faucet</div>
             </div>
             <Wallet>
-              <FaucetForm 
+              <FaucetForm
                 showChooseNetwork={true}
                 vm={ChainVm.solana}
                 defaultFaucetUrl={"https://api.apricot.eclipsenetwork.xyz:8899"}
@@ -211,11 +309,15 @@ const Home: NextPage = () => {
             <div className="title">
               <div className="header">Ethereum Testnet Faucet</div>
             </div>
+            <EvmWallet>
               <FaucetForm
+                account={account}
                 showChooseNetwork={false}
                 vm={ChainVm.ethereum}
-                defaultFaucetUrl={"https://faucet.evm.apricot.eclipsenetwork.xyz/request_neon"}
+                defaultFaucetUrl={"https://faucet.evm.zebec.eclipsenetwork.xyz/request_neon"}
               />
+            </EvmWallet>
+
           </div>
         </div>
 
