@@ -21,26 +21,18 @@ export const toHex = (num: Number) => {
 };
 
 
+const zebecChainId = 91002;
+
 const networkParams = {
-  '91001': {
-    chainId: toHex(91001),
-    rpcUrls: ["https://api.evm.apricot.eclipsenetwork.xyz/solana"],
-    chainName: "Apricot Testnet",
-    nativeCurrency: { name: "NEON", decimals: 18, symbol: "NEON" },
-    blockExplorerUrls: ["https://ethscan.io"],
-    iconUrls: ["https://bafkreihxfowv6rjil2bndjgxjhthhqf6ib6rfvunf27c4osi4xztporp6i.ipfs.cf-ipfs.com"]
-  },
-  '91002': {
-    chainId: toHex(91002),
+  [toHex(zebecChainId)]: {
+    chainId: toHex(zebecChainId),
     rpcUrls: ["https://api.evm.zebec.eclipsenetwork.xyz/solana"],
     chainName: "Zebec Testnet",
     nativeCurrency: { name: "NEON", decimals: 18, symbol: "NEON" },
     blockExplorerUrls: ["https://ethscan.io"],
-    iconUrls: [
-      "https://bafkreihxfowv6rjil2bndjgxjhthhqf6ib6rfvunf27c4osi4xztporp6i.ipfs.cf-ipfs.com"
-    ]
-  }
-};
+    iconUrls: ["https://bafkreihxfowv6rjil2bndjgxjhthhqf6ib6rfvunf27c4osi4xztporp6i.ipfs.cf-ipfs.com"]
+  },
+}
 
 
 
@@ -177,7 +169,7 @@ export const FaucetForm = (props: FaucetFormProps) => {
       <label htmlFor="input-address" className="form-label">{vm} Wallet Address</label>
       <input
         id="input-address"
-        value={account}
+        value={account || ''}
         onChange={(e) => setAddress(e.target.value)}
         placeholder="address"
         type="text"
@@ -226,14 +218,14 @@ const Home: NextPage = () => {
           method: "wallet_switchEthereumChain",
           params: [{ chainId: toHex(chainId) }]
         });
-      } catch (switchError) {
+      } catch (switchError: any) {
         if (switchError.code === 4902) {
           try {
             await library.provider.request({
               method: "wallet_addEthereumChain",
-              params: [networkParams[chainId.toString()]]
+              params: [networkParams[toHex(chainId)]]
             });
-          } catch (error) {
+          } catch (error: any) {
             setError(error);
           }
         }
@@ -242,7 +234,7 @@ const Home: NextPage = () => {
 
 
     const Injected = new InjectedConnector({
-      supportedChainIds: [1, 91001, 91002]
+      supportedChainIds: [1, 91002]
     });
 
     const handleConnect = async () => {
@@ -257,9 +249,14 @@ const Home: NextPage = () => {
           { account ? account : "Connect Wallet"}
 
           </button>
-        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={() => {
-          switchNetwork(91002)
-        }}>Connect <span style={{ color: 'yellow'}}>Zebec</span> EVM Test Network</button>
+          {chainId !== zebecChainId &&
+            <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={() => {
+              switchNetwork(zebecChainId)
+            }}>Connect <span style={{ color: 'yellow'}}>Zebec</span> EVM Test Network</button>
+          }
+          { chainId && <div className="self-center">
+              Connected to chain: {networkParams[toHex(chainId)]?.chainName || chainId}
+            </div>}
         {props.children}
       </div>
 
