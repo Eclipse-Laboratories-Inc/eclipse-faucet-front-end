@@ -138,7 +138,8 @@ export const FaucetForm = (props: FaucetFormProps) => {
 
     setSending(true)
     setError(null)
-    const body = vm === ChainVm.solana ? solanaRpcBody(Number(amount), address) : neonEvmBody(Number(amount), address)
+    // @ts-ignore
+    const body = vm === ChainVm.solana ? solanaRpcBody(Number(amount), address) : neonEvmBody(Number(amount), account)
     const res = await fetch(faucet, {
       method: 'POST',
       headers: {
