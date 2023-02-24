@@ -27,10 +27,10 @@ const networkParams = {
   [toHex(zebecChainId)]: {
     chainId: toHex(zebecChainId),
     rpcUrls: ["https://api.evm.zebec.eclipsenetwork.xyz/solana"],
-    chainName: "Zebec Testnet",
-    nativeCurrency: { name: "NEON", decimals: 18, symbol: "NEON" },
+    chainName: "Nautilus Triton Testnet",
+    nativeCurrency: { name: "tZBC", decimals: 18, symbol: "tZBC" },
     blockExplorerUrls: ["https://ethscan.io"],
-    iconUrls: ["https://bafkreihxfowv6rjil2bndjgxjhthhqf6ib6rfvunf27c4osi4xztporp6i.ipfs.cf-ipfs.com"]
+    iconUrls: []
   },
 }
 
@@ -263,7 +263,7 @@ const Home: NextPage = () => {
           {chainId !== zebecChainId &&
             <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={() => {
               switchNetwork(zebecChainId)
-            }}>Connect <span style={{ color: 'yellow'}}>Zebec</span> EVM Test Network</button>
+            }}>Connect <span style={{ color: 'yellow'}}>Nautilus Triton </span> EVM Test Network</button>
           }
           { chainId && <div className="self-center">
               Connected to chain: {networkParams[toHex(chainId)]?.chainName || chainId}
@@ -281,7 +281,7 @@ const Home: NextPage = () => {
         <title>Eclipse Testnet Faucets</title>
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:image" content={`${SELF_URL}/eclipse_twitter_card.jpg`} />
-        <meta name="twitter:title" content="Eclipse Testnet Faucet" />
+        <meta name="twitter:title" content="Nautilus Triton Testnet Faucet" />
         <meta
           name="twitter:description"
           content="The Eclipse testnet faucet is a client tool that allows anyone to easily request a nominal amount of Eclipse assets for testing purposes."
@@ -300,22 +300,10 @@ const Home: NextPage = () => {
         </div>
 
         <div className="subhead">Eclipse</div>
-        <div className="grid grid-cols-2 space-x-4">
+        <div>
           <div className="form-content">
             <div className="title">
-              <div className="header">Solana Testnet Faucet</div>
-            </div>
-            <Wallet>
-              <FaucetForm
-                showChooseNetwork={true}
-                vm={ChainVm.solana}
-                defaultFaucetUrl={"https://api.apricot.eclipsenetwork.xyz:8899"}
-              />
-            </Wallet>
-          </div>
-          <div className="form-content">
-            <div className="title">
-              <div className="header">Ethereum Testnet Faucet</div>
+              <div className="header">Nautilus Triton Testnet Faucet</div>
             </div>
             <EvmWallet>
               <FaucetForm
