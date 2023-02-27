@@ -12,6 +12,7 @@ import dynamic from "next/dynamic";
 import { clusterApiUrl } from '@solana/web3.js';
 import { InjectedConnector } from "@web3-react/injected-connector";
 import { useWeb3React } from '@web3-react/core'
+import { ethers } from 'ethers';
 // Default styles that can be overridden by your app
 require('@solana/wallet-adapter-react-ui/styles.css');
 
@@ -108,7 +109,7 @@ export const FaucetForm = (props: FaucetFormProps) => {
   const [error, setError] = useState<string | null>(null)
   const [signature, setSignature] = useState<string | null>(null)
   const { connection } = useConnection();
-  const { publicKey, sendTransaction } = useWallet();
+  // const { publicKey, sendTransaction } = useWallet();
 
   const solanaRpcBody = (amount: number, address: string) => (
     JSON.stringify({
@@ -128,18 +129,21 @@ export const FaucetForm = (props: FaucetFormProps) => {
 
 
   useEffect(() => {
-    if (publicKey !== null) {
-      setAddress(publicKey.toString());
+    if (account) {
+      setAddress(account);
     }
-  }, [publicKey]);
+  }, [account]);
 
   const onSend = useCallback(async () => {
+    if(Number(amount) <= 0 || !ethers.utils.isAddress(address)){
+      return;
+    }
     const faucet = `${faucetUrl}`
 
     setSending(true)
     setError(null)
     // @ts-ignore
-    const body = vm === ChainVm.solana ? solanaRpcBody(Number(amount), address) : neonEvmBody(Number(amount), account)
+    const body = vm === ChainVm.solana ? solanaRpcBody(Number(amount), address) : neonEvmBody(Number(amount), address)
     const res = await fetch(faucet, {
       method: 'POST',
       headers: {
@@ -245,7 +249,7 @@ const Home: NextPage = () => {
 
 
     const Injected = new InjectedConnector({
-      supportedChainIds: [1, 91002]
+      // supportedChainIds: [1, 91002]
     });
 
     const handleConnect = async () => {
