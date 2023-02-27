@@ -282,28 +282,28 @@ const Home: NextPage = () => {
   return (
     <div>
       <Head>
-        <title>Eclipse Testnet Faucets</title>
-        <meta name="twitter:card" content="summary_large_image" />
+        <title>Triton Faucet</title>
+        <link rel="shortcut icon" href="/favicon.ico" />
+        {/* <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:image" content={`${SELF_URL}/eclipse_twitter_card.jpg`} />
         <meta name="twitter:title" content="Nautilus Triton Testnet Faucet" />
         <meta
           name="twitter:description"
           content="The Eclipse testnet faucet is a client tool that allows anyone to easily request a nominal amount of Eclipse assets for testing purposes."
-        />
-
-        <meta property="og:title" content="Eclipse Testnet Faucet" />
+        /> */}
+        {/* <meta property="og:title" content="Eclipse Testnet Faucet" />
         <meta
           property="og:description"
           content="The Eclipse testnet faucet is a client tool that allows anyone to easily request a nominal amount of Eclipse assets for testing purposes."
         />
-        <meta property="og:image" content={`${SELF_URL}/eclipse_twitter_card.jpg`} />
+        <meta property="og:image" content={`${SELF_URL}/eclipse_twitter_card.jpg`} /> */}
       </Head>
-      <div className="container">
+      <div className="container" style={{marginLeft: 'auto', marginRight: 'auto'}}>
         <div className="icon">
-          <Image alt="Eclipse logo" src="/icon.svg" height={90} width={90} />
+          <Image alt="Triton logo" src="/icon.png" height={90} width={90} />
         </div>
 
-        <div className="subhead">Eclipse</div>
+        <div className="subhead">Triton Faucet</div>
         <div>
           <div className="form-content">
             <div className="title">
