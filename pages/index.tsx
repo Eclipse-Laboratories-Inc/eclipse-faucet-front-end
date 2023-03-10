@@ -30,7 +30,7 @@ const networkParams = {
     rpcUrls: ["https://api.evm.zebec.eclipsenetwork.xyz/solana"],
     chainName: "Nautilus Triton Testnet",
     nativeCurrency: { name: "tZBC", decimals: 18, symbol: "tZBC" },
-    blockExplorerUrls: ["https://ethscan.io"],
+    blockExplorerUrls: ["https://triton.nautscan.com/"],
     iconUrls: []
   },
 }
