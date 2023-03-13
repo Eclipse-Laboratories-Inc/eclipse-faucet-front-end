@@ -1,7 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 
 body,
 html {
@@ -113,4 +115,11 @@ input[type='number']::-webkit-inner-spin-button {
 .global-container {
   max-width: 800px;
   margin: 0 auto;
+}
+
+
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
