@@ -3,13 +3,14 @@
 @tailwind components;
 @tailwind utilities;
 
-body, html {
+body,
+html {
   margin: 0;
 }
 
 body {
   font-family: 'IBM Plex Mono', monospace;
-  padding: 50px;
+  padding: 50px 20px;
   background-color: #000;
   color: #fff;
 }
@@ -35,7 +36,7 @@ body {
 }
 
 .header {
-  font-size: 48px;
+  /* font-size: 48px; */
 }
 
 .form-input {
@@ -52,7 +53,6 @@ body {
   flex-flow: column;
   align-items: flex-start;
   text-align: center;
-  min-width: 500px;
 }
 .icon {
   align-self: baseline;
@@ -80,7 +80,7 @@ input:focus {
 }
 
 /* hide default input arrows */
-input[type=number]::-webkit-inner-spin-button {
+input[type='number']::-webkit-inner-spin-button {
   -webkit-appearance: none;
 }
 
@@ -108,8 +108,9 @@ input[type=number]::-webkit-inner-spin-button {
 }
 
 @media only screen and (max-width: 900px) {
-  input {
-    width: 250px;
-  }
 }
 
+.global-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
