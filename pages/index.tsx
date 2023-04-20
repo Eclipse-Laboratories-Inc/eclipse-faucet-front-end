@@ -1,329 +1,256 @@
-import { NextPage } from 'next'
-import Head from 'next/head'
-import Image from 'next/image'
-import { useState, useCallback, useMemo, useEffect, ReactNode, Children } from 'react'
-import { ConnectionProvider, WalletProvider, useConnection, useWallet } from '@solana/wallet-adapter-react';
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
-import { SolflareWalletAdapter, PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
-import {
-  WalletMultiButton
-} from '@solana/wallet-adapter-react-ui';
-import dynamic from "next/dynamic";
-import { clusterApiUrl } from '@solana/web3.js';
-import { InjectedConnector } from "@web3-react/injected-connector";
-import { useWeb3React } from '@web3-react/core'
-import { ethers } from 'ethers';
-// Default styles that can be overridden by your app
-require('@solana/wallet-adapter-react-ui/styles.css');
+import React, { useEffect, useState } from 'react'
+import { Web3ReactProvider, useWeb3React } from '@web3-react/core'
+import { Web3Provider } from '@ethersproject/providers'
+import ReCAPTCHA from 'react-google-recaptcha'
+import { Transition } from '@headlessui/react'
+import { CheckIcon, ArrowPathIcon } from '@heroicons/react/20/solid'
+import Banner from './components/Banner'
+import ConnectWalletButton from './components/ConnectWalletButton'
+import { AddNetworkButton } from './components/AddNetworkButton'
+import RequestAirdrop from './components/RequestTokens'
 
-export const toHex = (num: Number) => {
-  const val = Number(num);
-  return "0x" + val.toString(16);
-};
+function getLibrary(provider: any): Web3Provider {
+  const library = new Web3Provider(provider)
+  library.pollingInterval = 12000
+  return library
+}
 
-
-const zebecChainId = 91002;
-
-const networkParams = {
-  [toHex(zebecChainId)]: {
-    chainId: toHex(zebecChainId),
-    rpcUrls: ["https://api.evm.zebec.eclipsenetwork.xyz/solana"],
-    chainName: "Nautilus Triton Testnet",
-    nativeCurrency: { name: "tZBC", decimals: 18, symbol: "tZBC" },
-    blockExplorerUrls: ["https://triton.nautscan.com/"],
-    iconUrls: []
+const timeline = [
+  {
+    id: 1,
+    content: 'Complete Catcha.',
+    message: 'Complete Captcha',
   },
+  {
+    id: 2,
+    content: 'Connect wallet.',
+    message: 'Next Step',
+  },
+  {
+    id: 3,
+    content: 'Connect to EVM chain.',
+    message: 'Next Step',
+  },
+  {
+    id: 4,
+    content: 'Airdrop 10 testnet tokens.',
+    message: 'Next Step',
+  },
+  {
+    id: 5,
+    content: 'Done!',
+  },
+]
+
+function classNames(...classes: string[]) {
+  return classes.filter(Boolean).join(' ')
 }
 
+export default function Faucet() {
+  const [visibleSections, setVisibleSections] = useState(1)
+  const [isCaptchaSolved, setIsCaptchaSolved] = useState(false)
+  const [rpcUrl, setRpcUrl] = useState<string | null>(null);
 
+  const onCaptchaChange = (value: string | null) => {
+    if (value) {
+      setIsCaptchaSolved(true)
+    } else {
+      setIsCaptchaSolved(false)
+    }
+  }
 
-const ReactUIWalletModalProviderDynamic = dynamic(
-  async () =>
-    (await import("@solana/wallet-adapter-react-ui")).WalletModalProvider,
-  { ssr: false }
-);
-
-
-
-
-enum ChainVm {
-  ethereum = "Ethereum",
-  solana = "Solana",
-}
-
-
-
-type WalletProps = { children: ReactNode }
-
-export const Wallet = (props: WalletProps) => {
-  // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'.
-  const network = WalletAdapterNetwork.Devnet;
-
-  // You can also provide a custom RPC endpoint.
-  const endpoint = useMemo(() => clusterApiUrl(network), [network]);
-
-  const wallets = useMemo(
-    () => [
-      new SolflareWalletAdapter(),
-      new PhantomWalletAdapter()
-    ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [network]
-  );
-
-  return (
-    <ConnectionProvider endpoint={endpoint}>
-      <WalletProvider wallets={wallets} >
-        <ReactUIWalletModalProviderDynamic>
-          <div className="wallet-connect">
-            <WalletMultiButton />
-            <label>Connect to fill in your Solana address :-)</label>
-          </div>
-
-          {props.children}
-        </ReactUIWalletModalProviderDynamic>
-      </WalletProvider>
-    </ConnectionProvider>
-  );
+  // Update the handleButtonClick function to check if the wallet is connected before proceeding to the next section
+const handleButtonClick = async (eventIdx: number) => {
+  if ((eventIdx === 0 || eventIdx === 1 || (eventIdx === 2 && isChainConnected) || eventIdx > 2) && !isConnecting) {
+    if (eventIdx === 1 && !isWalletConnected) {
+      alert('Please connect your wallet first');
+    } else {
+      setVisibleSections((prevState) => prevState + 1);
+    }
+  }
 };
 
-type FaucetFormProps = {
-  showChooseNetwork: Boolean,
-  vm: ChainVm,
-  defaultFaucetUrl: string,
-  account?: string | null
-}
 
-export const FaucetForm = (props: FaucetFormProps) => {
-  const {
-    showChooseNetwork,
-    vm,
-    defaultFaucetUrl,
-    account,
-  } = props
 
-  const [address, setAddress] = useState<string>("")
-  const [amount, setAmount] = useState<string | null>(null)
-  const [sending, setSending] = useState(false)
-  const [faucetUrl, setFaucetUrl] = useState(defaultFaucetUrl)
-  const [error, setError] = useState<string | null>(null)
-  const [signature, setSignature] = useState<string | null>(null)
-  const { connection } = useConnection();
-  // const { publicKey, sendTransaction } = useWallet();
 
-  const solanaRpcBody = (amount: number, address: string) => (
-    JSON.stringify({
-      jsonrpc: '2.0',
-      id: '2',
-      method: 'requestAirdrop',
-      params: [address, Math.round(amount * 1000000000)],
-    })
-  )
+  const resetTimeline = () => {
+    setVisibleSections(1)
+    setIsWalletConnected(false) 
+  }
 
-  const neonEvmBody = (amount: number, address: string) => (
-    JSON.stringify({
-      amount,
-      wallet: address,
-    })
-  )
+  // Add the handleWalletConnected callback function
+  const handleWalletConnected = () => {
+    setIsWalletConnected(true)
+    console.log('Wallet connected')
+  }
 
+  const [isWalletConnected, setIsWalletConnected] = useState(false)
+  const [currentAccount, setCurrentAccount] = useState<string | undefined>(undefined)
+
+  async function pubKey() { 
+     
+        // Request the user's accounts
+        const accounts = await(window as any).ethereum.request({ method: 'eth_requestAccounts' }) as string[]
+
+        // Get the first account from the accounts array
+        const account = accounts[0]
+
+        if (account) {
+          console.log('Account address:', account)
+          console.log('Airdrop requested for account:', account)
+          setCurrentAccount(account)
+        } else {
+          console.log('No account found.')
+        }
+  }
 
   useEffect(() => {
-    if (account) {
-      setAddress(account);
+    if (isWalletConnected) {
+      setVisibleSections(3)
+      console.log('Wallet connected:', isWalletConnected)
     }
-  }, [account]);
-
-  const onSend = useCallback(async () => {
-    if(Number(amount) <= 0 || !ethers.utils.isAddress(address)){
-      return;
-    }
-    const faucet = `${faucetUrl}`
-
-    setSending(true)
-    setError(null)
-    // @ts-ignore
-    const body = vm === ChainVm.solana ? solanaRpcBody(Number(amount), address) : neonEvmBody(Number(amount), address)
-    const res = await fetch(faucet, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body,
-    })
-
-    setSending(false)
-    if (!res.ok) {
-      const body = await res.text()
-      setError(`Returned ${res.status}: ${body}`)
-      return
-    }
-
-    if (vm === ChainVm.solana) {
-      const response = await res.json()
-      if (response.error) {
-        setError(response.error.message)
-      } else {
-        setSignature(response.result)
-      }
-    } else {
-      // EVM faucet doesn't return a body
-      setSignature('OK')
-    }
-  }, [address, amount, faucetUrl, vm])
-
-  return (
-    <div className="form">
-      {showChooseNetwork && <><label htmlFor="input-endpoint" className="form-label">Choose your {vm} Eclipse Network</label><input
-        id="input-endpoint"
-        value={faucetUrl}
-        onChange={(e) => setFaucetUrl(e.target.value)}
-        placeholder="Eclipse Solana RPC endpoint"
-        type="text" /></>}
-
-      <label htmlFor="input-address" className="form-label">{vm} Wallet Address</label>
-      <input
-        id="input-address"
-        value={address || ''}
-        onChange={(e) => setAddress(e.target.value)}
-        placeholder="address"
-        type="text"
-      />
-
-      <label htmlFor="input-amount" className="form-label">Token Amount</label>
-      <input
-        id="input-amount"
-        style={{ width: "--webkit-fill-available" }}
-        value={amount ?? ''} onChange={(e) => setAmount(e.target.value)}
-        placeholder="amount"
-        type="number"
-        min="0"
-        step="0.001" />
-
-      <button className="send" type="submit" onClick={onSend}>
-        {sending ? 'Sending...' : 'Send'}
-      </button>
-      {signature && <p>Sent!</p>}
-      {error && <p>{error}</p>}
-    </div>
-  )
-
-}
-
-const SELF_URL = process.env.NEXT_PUBLIC_SELF_URL
-const Home: NextPage = () => {
-
-  const { activate, deactivate, active, chainId, account, library } = useWeb3React();
-  const [error, setError] = useState<string | null>(null)
-
-  console.log({
-    account,
-    chainId,
-    active,
-    library
-  })
+  }, [isWalletConnected])
 
 
-  const EvmWallet = (props: WalletProps) => {
 
+  const [isConnecting, setIsConnecting] = useState(false)
+  const [isChainConnected, setisChainConnected] = useState(false)
 
-    const switchNetwork = async (chainId: Number) => {
-      try {
-        await library.provider.request({
-          method: "wallet_switchEthereumChain",
-          params: [{ chainId: toHex(chainId) }]
-        });
-      } catch (switchError: any) {
-        if (switchError.code === 4902) {
-          try {
-            await library.provider.request({
-              method: "wallet_addEthereumChain",
-              params: [networkParams[toHex(chainId)]]
-            });
-          } catch (error: any) {
-            setError(error);
-          }
-        }
-      }
-    };
-
-
-    const Injected = new InjectedConnector({
-      // supportedChainIds: [1, 91002]
-    });
-
-    const handleConnect = async () => {
-      activate(Injected)
-    }
-
-    return (
-      <div className="flex flex-col">
-        <button 
-          className={`my-1.5 ${account && 'bg-transparent'} bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded`}
-          onClick={handleConnect}>
-          { account ? account : "Connect Wallet"}
-
-          </button>
-          {chainId !== zebecChainId &&
-            <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={() => {
-              switchNetwork(zebecChainId)
-            }}>Connect <span style={{ color: 'yellow'}}>Nautilus Triton </span> EVM Test Network</button>
-          }
-          { chainId && <div className="self-center">
-              Connected to chain: {networkParams[toHex(chainId)]?.chainName || chainId}
-            </div>}
-        {props.children}
-      </div>
-
-    )
-
-  }
 
   return (
     <div>
-      <Head>
-        <title>Triton Faucet</title>
-        <link rel="shortcut icon" href="/favicon.ico" />
-        {/* <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:image" content={`${SELF_URL}/eclipse_twitter_card.jpg`} />
-        <meta name="twitter:title" content="Nautilus Triton Testnet Faucet" />
-        <meta
-          name="twitter:description"
-          content="The Eclipse testnet faucet is a client tool that allows anyone to easily request a nominal amount of Eclipse assets for testing purposes."
-        /> */}
-        {/* <meta property="og:title" content="Eclipse Testnet Faucet" />
-        <meta
-          property="og:description"
-          content="The Eclipse testnet faucet is a client tool that allows anyone to easily request a nominal amount of Eclipse assets for testing purposes."
-        />
-        <meta property="og:image" content={`${SELF_URL}/eclipse_twitter_card.jpg`} /> */}
-      </Head>
-      <div className="container" style={{marginLeft: 'auto', marginRight: 'auto'}}>
-        <div className="icon">
-          <Image alt="Triton logo" src="/icon.png" height={90} width={90} />
+      <Banner
+        text={'Eclipse x Injective Hackathon is live!'}
+        linkToTarget="https://www.youtube.com/watch?v=zQIZ0EsJ2s4&ab_channel=Injective"
+      />
+      <div className="bg-black h-screen p-5">
+        <div className="border-b border-gray-200 pb-5 md:mx-32 lg:mx-8 xl:mx-72 my-10">
+          <h3 className="text-2xl text-gray-200 font-semibold leading-6 text-white-900">Eclipse EVM Faucet</h3>
+          <p className="mt-2 max-w-4xl text-sm text-gray-200">
+            Get testnet tokens to your wallet for any of the Eclipse EVM chains!
+          </p>
         </div>
 
-        <div className="subhead">Triton Faucet</div>
-        <div>
-          <div className="form-content">
-            <div className="title">
-              <div className="header">Nautilus Triton Testnet Faucet</div>
-            </div>
-            <EvmWallet>
-              <FaucetForm
-                account={account}
-                showChooseNetwork={false}
-                vm={ChainVm.ethereum}
-                defaultFaucetUrl={"https://faucet.evm.zebec.eclipsenetwork.xyz/request_neon"}
-              />
-            </EvmWallet>
+        <div className="text-white p-12 rounded-lg shadow-lg bg-slate-500/25 md:mx-32 lg:mx-8 xl:mx-72">
+          <div className="flow-root">
+            <ul role="list" className="-mb-8">
+              {timeline.map((event, eventIdx) => (
+                <Transition
+                  key={event.id}
+                  show={eventIdx < visibleSections}
+                  enter="transition-opacity duration-500"
+                  enterFrom="opacity-0"
+                  enterTo="opacity-100"
+                  leave="transition-opacity duration-500"
+                  leaveFrom="opacity-100"
+                  leaveTo="opacity-0"
+                >
+                  <li>
+                    <div className="relative pb-8">
+                      {eventIdx !== timeline.length - 1 ? (
+                        <span className="absolute left-4 top-4 -ml-px h-full w-0.5 bg-gray-600" aria-hidden="true" />
+                      ) : null}
+                      <div className="relative flex space-x-3">
+                        <div>
+                          <span
+                            className={classNames(
+                              'h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-gray-800',
+                              eventIdx === 1 && !isWalletConnected
+                                ? 'bg-green-500'
+                                : eventIdx < visibleSections
+                                ? 'bg-green-500'
+                                : 'bg-gray-500'
+                            )}
+                          >
+                            <CheckIcon className="h-5 w-5" aria-hidden="true" />
+                          </span>
+                        </div>
+                        <div className="flex flex-col min-w-0 flex-1 space-y-1.5">
+                          <div>
+                            <p className="text-sm">{event.content} </p>
+                          </div>
+                        </div>
+                      </div>
 
+                      {eventIdx === 0 && !isCaptchaSolved && (
+                        <div className="w-full flex justify-center mt-2">
+                          <div className="relative ">
+                            <div className="md:hidden">
+                              <ReCAPTCHA
+                                sitekey="6LfnN6MlAAAAAGQ_leBCpZkzcX8MFFQO_5U-Iqqp"
+                                onChange={onCaptchaChange}
+                                className="scale-50"
+                              />
+                            </div>
+
+                            {/* Desktop and Tablet ReCAPTCHA */}
+                            <div className="hidden md:block">
+                              <ReCAPTCHA
+                                sitekey="6LfnN6MlAAAAAGQ_leBCpZkzcX8MFFQO_5U-Iqqp"
+                                onChange={onCaptchaChange}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {eventIdx === 1 && (
+                        <div className="flex justify-center mt-2">
+                          <Web3ReactProvider getLibrary={getLibrary}>
+                            <ConnectWalletButton
+                              isConnected={isWalletConnected}
+                              isConnecting={isConnecting}
+                              onConnecting={setIsConnecting}
+                              onConnected={handleWalletConnected}
+                            >
+                              {isWalletConnected ? 'Wallet Connected' : 'Connect Wallet'}
+                            </ConnectWalletButton>
+                          </Web3ReactProvider>
+                        </div>
+                      )}
+
+                      {eventIdx === 2 && (
+                        <div className="flex justify-center mt-2">
+                          <AddNetworkButton setIsConnected={setisChainConnected} onRpcUrlChanged={setRpcUrl} >
+                            {'Switch Network'}
+                          </AddNetworkButton>
+                        </div>
+                      )}
+                      {eventIdx === 3 && (
+                        <div className="flex justify-center mt-2" onClick={() => pubKey()}>
+                          <RequestAirdrop account={currentAccount} rpcUrl={rpcUrl || ''} />
+                        </div>
+                      )}
+
+                      {eventIdx === visibleSections - 1 && eventIdx !== timeline.length - 1 && eventIdx !== 1 && (
+                        <div className="flex justify-center">
+                          <button
+                            onClick={() => handleButtonClick(eventIdx)}
+                            disabled={(!isCaptchaSolved && eventIdx === 0) || (eventIdx === 3 && !isChainConnected)}
+                            className="inline-flex items-center my-3 px-3 py-1.5 border-2 border-white text-white bg-transparent hover:bg-white hover:text-gray-700 focus:outline-none transition-all duration-300 ease-in focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mt-4 mb-2"
+                          >
+                            <span>{event.message}</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </li>
+                </Transition>
+              ))}
+            </ul>
+            {visibleSections === timeline.length && (
+              <div className="flex justify-center -my-6">
+                <button
+                  onClick={resetTimeline}
+                  className="inline-flex items-center px-4 py-2 border-2 border-white text-white bg-transparent hover:bg-white hover:text-gray-700 focus:outline-none transition-all duration-300 ease-in shadow-sm focus:ring-2 focus:ring-offset-2 focus:ring-white mt-4 mb-2"
+                >
+                  Start Again
+                </button>
+              </div>
+            )}
           </div>
         </div>
-
       </div>
     </div>
   )
 }
-
-export default Home
