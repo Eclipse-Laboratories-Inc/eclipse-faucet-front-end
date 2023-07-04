@@ -87,15 +87,15 @@ const modifyRpcUrl = (url: string) => {
 
   return (
     <button
-      className={`send inline-flex items-center px-4 py-2 border-2 border-white text-sm font-medium ${
+      className={`send inline-flex items-center px-6 py-3 border border-transparent rounded-full text-base font-medium  transition-all duration-300 ease-in ${
         buttonStatus === 'idle'
-          ? 'bg-transparent text-white hover:bg-white hover:text-gray-700'
+          ? 'bg-custom-orange text-white hover:bg-white hover:text-gray-700'
           : buttonStatus === 'sending'
-          ? 'bg-yellow-500 text-white'
+          ? 'bg-custom-orange/80 text-white'
           : buttonStatus === 'success'
           ? 'bg-white text-gray-700 cursor-not-allowed'
           : 'bg-red-500 text-white'
-      } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mt-4 mb-2 transition-all duration-300 ease-in`}
+      } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-custom-orange/80 mt-4 mb-2 transition-all duration-300 ease-in`}
       type="submit"
       onClick={handleClick}
       disabled={buttonStatus !== 'idle'}

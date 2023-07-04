@@ -50,12 +50,12 @@ const ConnectWalletButton: React.FC<Props> = ({ onConnected, onConnecting, isCon
     }
   }
 
-  const buttonClass = `inline-flex items-center px-4 py-2 border-2 border-white focus:outline-none focus:ring-2 focus:ring-offset-2 mt-4 mb-2 transition-all duration-300 ease-in ${
+  const buttonClass = `inline-flex items-center px-6 py-3 border border-transparent rounded-full text-base font-medium shadow-sm transition-all duration-300 ease-in ${
     isConnected
-      ? 'bg-white text-gray-700 cursor-not-allowed'
+      ? 'bg-gray-600 text-white cursor-not-allowed'
       : walletNotFound
       ? 'bg-red-500 text-white hover:bg-red-600 focus:ring-red-500'
-      : 'bg-transparent text-white hover:bg-white hover:text-gray-700 focus:ring-blue-500'
+      : 'bg-custom-blue text-white hover:bg-custom-blue/70 focus:ring-custom-blue/20'
   }`
 
   return (
