@@ -314,7 +314,7 @@ const Home: NextPage = () => {
                 account={account}
                 showChooseNetwork={false}
                 vm={ChainVm.ethereum}
-                defaultFaucetUrl={"https://faucet.evm.zebec.eclipsenetwork.xyz/request_neon"}
+                defaultFaucetUrl={"https://staging-rpc.dev2.eclipsenetwork.xyz/requestAirdrop"}
               />
             </EvmWallet>
 
